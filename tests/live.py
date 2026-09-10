@@ -41,7 +41,7 @@ for address in addresses:
     wait_for(lambda: query('activewindow')['address']==address,'Click target did not receive focus')
 assert all(c['size']==size for c in clients()),'Selecting thumbnails resized windows'
 print('PASS: each thumbnail focuses its own full-size window')
-wait_for(lambda: any(p['visible'] and len(p['windows'])==len(addresses) and all(w['ready'] and w['sourceWidth']>=size[0] for w in p['windows']) for p in sidebar()),'True window captures unavailable')
+wait_for(lambda: any(p['visible'] and len(p['windows'])==len(addresses)-1 and all(w['ready'] and w['sourceWidth']>=size[0] for w in p['windows']) for p in sidebar()),'True window captures unavailable')
 print('PASS: all miniatures contain compositor-captured full-resolution window content')
 action('toggle')
 wait_for(lambda: action('status')!='filmstrip' and not any(p['visible'] for p in sidebar()),'Rail must disappear when tiling returns')
@@ -52,7 +52,7 @@ print('PASS: toggle hides and restores the sidebar')
 p=subprocess.Popen(['foot','--app-id=filmstrip-test','--title=Filmstrip test','sh','-c','printf "Filmstrip lifecycle test\\n"; sleep 30'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 try:
     wait_for(lambda: len(clients())==len(addresses)+1,'New window did not join the layout')
-    wait_for(lambda: any(len(s['windows'])==len(addresses)+1 for s in sidebar()),'Sidebar did not add the new window')
+    wait_for(lambda: any(len(s['windows'])==len(addresses) for s in sidebar()),'Sidebar did not add the new window')
     wait_for(lambda: len({tuple(c['size']) for c in clients()})==1,'Opening a new window changed the layout sizes')
 finally:
     test=[c for c in clients() if c['class']=='filmstrip-test']
@@ -61,7 +61,7 @@ finally:
     try: p.wait(timeout=3)
     except subprocess.TimeoutExpired: p.terminate()
 wait_for(lambda: len(clients())==len(addresses),'Test window did not close')
-wait_for(lambda: any(len(s['windows'])==len(addresses) for s in sidebar()),'Closed window remained in the sidebar')
+wait_for(lambda: any(len(s['windows'])==len(addresses)-1 for s in sidebar()),'Closed window remained in the sidebar')
 action('focus',initial,str(ws))
 assert not run('hyprctl','configerrors')
 print('PASS: new/closed windows update thumbnails; clean compositor configuration')

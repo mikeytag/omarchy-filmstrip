@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Show only alternative windows in the sidebar; hide and stop capturing the main window's redundant preview.
+- Keep all windows in keyboard cycling and retain single-window expansion.
+
 ## 0.1.4 — First public release
 
 - Native monocle layout prevents clicks and hover from reaching inactive windows.

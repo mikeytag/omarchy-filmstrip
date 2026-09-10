@@ -54,14 +54,20 @@ try:
             click(x+w*dx, y+h*dy)
             assert_focus(c['address'])
     print('PASS: 21 actual main-window clicks; no wrong-window or transient focus')
-    p = panel_status()
-    assert p['visible'] and len(p['windows']) == 3
-    for c in p['windows']:
+    for _ in items:
+        p = panel_status()
+        assert p['visible'] and len(p['windows']) == 2
+        active = query('activewindow')['address'].removeprefix('0x')
+        assert active not in [c['address'].removeprefix('0x') for c in p['windows']]
+        c = p['windows'][0]
         drain()
         click(width-p['width']+c['centerX'], height-p['height']+c['centerY'])
         time.sleep(.25)
         address = '0x' + c['address'].removeprefix('0x')
         assert_focus(address)
+        after = panel_status()['windows']
+        assert len(after) == 2 and active in [w['address'].removeprefix('0x') for w in after]
+        assert c['address'] not in [w['address'] for w in after]
         click(width*.4, height*.5)
         assert_focus(address)
     print('PASS: actual thumbnail clicks select each window; subsequent main clicks stay there')

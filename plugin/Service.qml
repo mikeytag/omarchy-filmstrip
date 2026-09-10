@@ -12,6 +12,7 @@ Item {
   property string omarchyPath: Quickshell.env("OMARCHY_PATH")
   property var workspaceState: ({})
   property var panels: []
+  property var mainWindows: ({})
   property bool showHeader: true
   property bool showFooter: true
   property real backgroundOpacity: 0
@@ -55,7 +56,7 @@ Item {
         try {
           var states = {}
           JSON.parse(text).forEach(function(w) {
-            states[String(w.id)] = {layout: w.tiledLayout, fullscreen: w.hasfullscreen}
+            states[String(w.id)] = {layout: w.tiledLayout, fullscreen: w.hasfullscreen, lastWindow: (w.lastwindow || "").replace(/^0x/, "")}
           })
           if (JSON.stringify(states) !== JSON.stringify(root.workspaceState)) root.workspaceState = states
           root.panels.forEach(function(p) { p.syncWindows() })
@@ -82,6 +83,13 @@ Item {
       readonly property int workspaceId: monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : -1
       readonly property var state: root.workspaceState[String(workspaceId)] || ({})
       property var windows: []
+      readonly property string mainAddress: root.mainWindows[String(workspaceId)] || state.lastWindow || ""
+      function rememberMain(address) {
+        if (root.mainWindows[String(workspaceId)] === address) return
+        var next = Object.assign({}, root.mainWindows)
+        next[String(workspaceId)] = address
+        root.mainWindows = next
+      }
       readonly property bool filmstrip: state.layout === "monocle"
       visible: filmstrip && !state.fullscreen && !(monitor && monitor.lastIpcObject.specialWorkspace && monitor.lastIpcObject.specialWorkspace.id) && windows.length > 1
       anchors { right: true; top: true; bottom: true }
@@ -96,13 +104,16 @@ Item {
         var next = Hyprland.toplevels.values.filter(function(t) {
           return t.workspace && t.workspace.id === panel.workspaceId && !t.lastIpcObject.floating && !t.lastIpcObject.hidden
         }).sort(function(a, b) { return a.address.localeCompare(b.address) })
+        var active = next.find(function(t) { return t.activated })
+        if (active) rememberMain(active.address)
+        else if (next.length && !next.some(function(t) { return t.address === panel.mainAddress })) rememberMain(next[0].address)
         if (next.map(function(t) {return t.address}).join(",") !== windows.map(function(t) {return t.address}).join(",")) windows = next
       }
       function captureStatus() {
         var result = []
         for (var i = 0; i < cards.count; i++) {
           var c = cards.itemAt(i)
-          if (c) {
+          if (c && c.visible) {
             var center = c.mapToItem(panel.contentItem, c.width / 2, c.height / 2)
             result.push({address: c.modelData.address, ready: c.ready, sourceWidth: c.sourceWidth, sourceHeight: c.sourceHeight, centerX: center.x, centerY: center.y})
           }
@@ -138,7 +149,14 @@ Item {
               id: card
               required property var modelData
               required property int index
-              readonly property bool selected: modelData.activated
+              readonly property bool selected: modelData.address === panel.mainAddress
+              visible: !selected
+              Connections {
+                target: card.modelData
+                function onActivatedChanged() {
+                  if (card.modelData.activated) panel.rememberMain(card.modelData.address)
+                }
+              }
               readonly property bool inView: y + height >= scroll.contentY && y <= scroll.contentY + scroll.height
               readonly property bool ready: preview.hasContent
               readonly property int sourceWidth: preview.sourceSize.width
@@ -156,7 +174,7 @@ Item {
                 ScreencopyView {
                   id: preview
                   anchors.centerIn: parent
-                  captureSource: panel.visible && card.modelData ? card.modelData.wayland : null
+                  captureSource: panel.visible && card.visible && card.modelData ? card.modelData.wayland : null
                   live: false
                   paintCursor: false
                   constraintSize: Qt.size(previewBox.width, previewBox.height)
@@ -165,7 +183,7 @@ Item {
                 }
                 Timer {
                   interval: mouse.containsMouse ? 150 : 750
-                  running: panel.visible && card.inView && preview.captureSource !== null
+                  running: panel.visible && card.visible && card.inView && preview.captureSource !== null
                   repeat: true
                   onTriggered: preview.captureFrame()
                 }
@@ -201,12 +219,7 @@ Item {
               ToolTip.visible: mouse.containsMouse
               ToolTip.delay: 700
               ToolTip.text: card.modelData.title
-              onSelectedChanged: {
-                if (selected) {
-                  if (y < scroll.contentY) scroll.contentY = y
-                  else if (y + height > scroll.contentY + scroll.height) scroll.contentY = Math.max(0, y + height - scroll.height)
-                }
-              }
+
             }
           }
         }

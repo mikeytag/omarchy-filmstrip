@@ -3,7 +3,7 @@
 One large window. A strip of real window previews. Switch without reshuffling your workspace.
 
 Filmstrip gives the active window 90% of the screen and puts clickable miniature
-views of the workspace's windows in the remaining 10%. Use **Alt+Tab** or click a
+views of the workspace's other windows in the remaining 10%. Use **Alt+Tab** or click a
 preview to switch. With only one tiled window, the strip disappears and the
 window gets the full available space.
 
@@ -15,7 +15,7 @@ modify packaged files in `/usr/share/omarchy`.
 
 ## Features
 
-- Real compositor-captured previews, refreshed periodically.
+- Real compositor-captured previews of other windows; the main window is omitted.
 - **Super+L** toggles Filmstrip and the previous layout independently per workspace.
 - **Alt+Tab / Alt+Shift+Tab** cycle in thumbnail order.
 - Theme-aware cards, a transparent sidebar, and optional header/footer text.
