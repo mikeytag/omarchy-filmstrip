@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520" role="img" aria-labelledby="title desc">
+<title id="title">Filmstrip workspace layout</title><desc id="desc">A large active window on the left, three miniature windows on the right, and keyboard shortcuts below. Schematic illustration.</desc>
+<rect width="1000" height="520" rx="16" fill="#1a1b26"/>
+<g font-family="sans-serif" fill="#c0caf5">
+<text x="30" y="38" font-size="18" font-weight="bold">FILMSTRIP</text><text x="970" y="38" text-anchor="end" font-size="14" fill="#9aa5ce">Workspace illustration</text>
+<rect x="25" y="60" width="835" height="390" rx="8" fill="#24283b" stroke="#7aa2f7" stroke-width="2"/>
+<path d="M25 100H860" stroke="#414868"/>
+<circle cx="48" cy="80" r="5" fill="#f7768e"/><circle cx="66" cy="80" r="5" fill="#e0af68"/><circle cx="84" cy="80" r="5" fill="#9ece6a"/>
+<text x="443" y="244" text-anchor="middle" font-size="32">Your active window</text><text x="443" y="280" text-anchor="middle" font-size="18" fill="#9aa5ce">Room to focus. Other windows a click away.</text>
+<g stroke="#414868" fill="#24283b"><rect x="880" y="60" width="95" height="95" rx="6" stroke="#7aa2f7" stroke-width="2"/><rect x="880" y="170" width="95" height="95" rx="6"/><rect x="880" y="280" width="95" height="95" rx="6"/></g>
+<g fill="#414868"><rect x="890" y="72" width="75" height="8" rx="2"/><rect x="890" y="92" width="47" height="4"/><rect x="890" y="102" width="66" height="4"/><rect x="890" y="182" width="75" height="8" rx="2"/><rect x="890" y="202" width="28" height="38" rx="2"/><rect x="926" y="202" width="39" height="4"/><rect x="926" y="212" width="30" height="4"/><rect x="890" y="292" width="75" height="8" rx="2"/><rect x="890" y="312" width="75" height="30" rx="2"/></g>
+<text x="928" y="142" text-anchor="middle" font-size="12">Window 1</text><text x="928" y="252" text-anchor="middle" font-size="12">Window 2</text><text x="928" y="362" text-anchor="middle" font-size="12">Window 3</text>
+<text x="30" y="487" font-size="16">Alt + Tab to switch</text><text x="970" y="487" text-anchor="end" font-size="16">Super + L to toggle tiling</text></g></svg>

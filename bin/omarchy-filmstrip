@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""Filmstrip layout selection and workspace-local window switching."""
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+LAYOUT = 'monocle'
+STATE = Path.home() / '.local/state/omarchy/filmstrip'
+
+
+def hypr(*args):
+    result = subprocess.run(['hyprctl', *args], text=True, capture_output=True, check=True)
+    output = result.stdout.strip()
+    if output.startswith(('Error', 'Invalid', 'unknown', 'error')):
+        raise RuntimeError(output)
+    return output
+
+
+def query(name):
+    return json.loads(hypr(name, '-j'))
+
+
+def dispatch(code):
+    return hypr('dispatch', code)
+
+
+def normalized(address):
+    if not re.fullmatch(r'(?:0x)?[0-9a-fA-F]+', address):
+        raise ValueError('Invalid window address')
+    return '0x' + address.removeprefix('0x').lower()
+
+
+def windows(workspace):
+    return sorted((c for c in query('clients') if c['workspace']['id'] == workspace
+                   and not c.get('floating') and not c.get('hidden')),
+                  key=lambda c: normalized(c['address']))
+
+
+def focus(address, workspace):
+    address = normalized(address)
+    if address not in [normalized(c['address']) for c in windows(workspace)]:
+        return  # A preview can disappear between the click and the dispatch.
+    hypr('eval', 'hl.dispatch(hl.dsp.focus({ window = ' + json.dumps('address:' + address)
+         + ' }))')
+
+
+def save_layout(workspace, layout):
+    if layout not in (LAYOUT, 'dwindle', 'scrolling', 'master', 'monocle'):
+        layout = 'dwindle'
+    file = Path.home() / f'.local/state/omarchy/workspace-layouts/{workspace}.lua'
+    file.parent.mkdir(parents=True, exist_ok=True)
+    rule = f'hl.workspace_rule({{ workspace = "{workspace}", layout = "{layout}" }})'
+    # Persist only after the compositor has accepted the rule.
+    hypr('eval', rule)
+    temp = file.with_suffix('.tmp')
+    temp.write_text(rule + '\n')
+    temp.replace(file)
+    subprocess.run(['/usr/share/omarchy/bin/omarchy-shell', 'filmstrip', 'refresh'],
+                   capture_output=True, timeout=3)
+
+
+def main(args):
+    action = args[0] if args else 'toggle'
+    if action in ('--help', '-h'):
+        print('Filmstrip: one large window and a strip of true window miniatures.\n'
+              'Usage: omarchy-filmstrip [toggle|enable|disable|next|prev|focus ADDRESS|layout NAME|status]')
+        return
+    STATE.mkdir(parents=True, exist_ok=True)
+    # Serialize repeated keypresses, including read-modify-write layout choices.
+    with (STATE / 'controller.lock').open('w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        ws = query('activeworkspace')
+        wid, current = ws['id'], ws['tiledLayout']
+        if action == 'status':
+            print('filmstrip' if current == LAYOUT else current)
+            return
+        if action in ('next', 'prev'):
+            if current == LAYOUT:
+                items = windows(wid)
+                if not items:
+                    return
+                active = query('activewindow').get('address')
+                addresses = [w['address'] for w in items]
+                idx = addresses.index(active) if active in addresses else (-1 if action == 'next' else 0)
+                focus(addresses[(idx + (1 if action == 'next' else -1)) % len(addresses)], wid)
+            elif current == 'master':
+                dispatch('hl.dsp.layout("' + ('rollnext' if action == 'next' else 'rollprev') + '")')
+            else:
+                dispatch('hl.dsp.window.cycle_next({ next = ' + ('true' if action == 'next' else 'false') + ' })')
+                dispatch('hl.dsp.window.bring_to_top()')
+            return
+        if action == 'focus' and len(args) in (2, 3):
+            target_ws = int(args[2]) if len(args) == 3 else wid
+            visible_workspaces = [m['activeWorkspace']['id'] for m in query('monitors')]
+            if target_ws in visible_workspaces:
+                focus(args[1], target_ws)
+            return
+        if action not in ('toggle', 'enable', 'disable', 'layout'):
+            raise ValueError('Unknown action; use --help')
+        if wid < 1:
+            raise ValueError('Choose a regular workspace to use Filmstrip')
+        previous_file = STATE / 'previous.json'
+        previous = json.loads(previous_file.read_text()) if previous_file.exists() else {}
+        if action == 'layout':
+            if len(args) != 2 or args[1] not in ('filmstrip', 'dwindle', 'scrolling', 'master', 'monocle'):
+                raise ValueError('Layout must be filmstrip, dwindle, scrolling, master or monocle')
+            target = LAYOUT if args[1] == 'filmstrip' else args[1]
+        elif action == 'disable' or (action == 'toggle' and current == LAYOUT):
+            target = previous.get(str(wid), 'dwindle') if current == LAYOUT else current
+        else:
+            target = LAYOUT
+        if target == LAYOUT and current != LAYOUT:
+            previous[str(wid)] = current
+        save_layout(wid, target)
+        temp = previous_file.with_suffix('.tmp')
+        temp.write_text(json.dumps(previous, indent=2) + '\n')
+        temp.replace(previous_file)
+
+
+if __name__ == '__main__':
+    try:
+        main(sys.argv[1:])
+    except (ValueError, RuntimeError, OSError, subprocess.SubprocessError) as error:
+        print(f'Filmstrip: {error}', file=sys.stderr)
+        sys.exit(1)

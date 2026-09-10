@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "mtaggart.filmstrip",
+  "name": "Filmstrip",
+  "version": "0.1.4",
+  "author": "Michael Taggart",
+  "description": "One large window with a clickable strip of live window miniatures.",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}
