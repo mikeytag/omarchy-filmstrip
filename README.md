@@ -1,5 +1,7 @@
 # Filmstrip for Omarchy
 
+[![Built for Omarchy: Plugin](https://raw.githubusercontent.com/tcballard/omarchy-badges/75975e5b5bf75e7ede3764bcd2950046f7abfe2c/badges/v1/omarchy-plugin.svg)](https://github.com/tcballard/omarchy-badges)
+
 One large window. A strip of real window previews. Switch without reshuffling your workspace.
 
 Filmstrip gives the active window 90% of the screen and puts clickable miniature

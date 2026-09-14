@@ -216,9 +216,6 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: Quickshell.execDetached([root.controller, "focus", card.modelData.address, String(panel.workspaceId)])
               }
-              ToolTip.visible: mouse.containsMouse
-              ToolTip.delay: 700
-              ToolTip.text: card.modelData.title
 
             }
           }

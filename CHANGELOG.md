@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Remove full-window-title tooltips when hovering sidebar previews.
+- Add the community Built for Omarchy plugin badge to the README.
+
 ## 0.1.5
 
 - Show only alternative windows in the sidebar; hide and stop capturing the main window's redundant preview.
